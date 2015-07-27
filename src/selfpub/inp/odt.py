@@ -18,7 +18,8 @@ class ODTInputFile(InputFile):
 
     def get_metadata(self):
         ret = text.MetaData()
-        ret.cover = text.Image(self.cover_image_file)
+        if self.cover_image_file is not None:
+            ret.cover = text.Image(self.cover_image_file)
         
         md = self.odt.meta.properties
         

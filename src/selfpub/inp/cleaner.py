@@ -49,6 +49,7 @@ class Cleaner(InputFile):
         InputFile.__init__(self)
         self.__proxy = proxy
         self.__md = md
+        self.expect_paragraphs_to_start_with_tab = True
 
     def sections(self):
         for sec in self.__proxy.sections():
@@ -93,8 +94,13 @@ class Cleaner(InputFile):
         assert isinstance(para, text.Para)
         new_spans = []
         parsed = ""
+        first = self.expect_paragraphs_to_start_with_tab
         for span in para.spans:
             if isinstance(span, text.Text):
+                if first:
+                    first = False
+                    if len(span.text) > 0 and span.text[0] != '\t':
+                        print("*** Does not start with tab: {0}".format(span.text))
                 parsed = self.clean_text(span, new_spans, parsed)
             else:
                 new_spans.append(span)
@@ -121,7 +127,7 @@ class Cleaner(InputFile):
         print("cleaning [{0}]".format(text_node))
         for ch in text_node.text:
             # print("  - [{0}]".format(ord(ch)))
-            #if ch == '\t':
+            # if ch == '\t':
             #    # special tab handling; happens before we join the parsed text.
             #
             #    # First, strip off whitespace at the end of the val.
@@ -153,6 +159,8 @@ class Cleaner(InputFile):
                     spans.append(_special_text(text_node, ch, "&ndash;", False))
                     parsed += "-"
                 else:
+                    val = _join_text(spans, text_node, val)
+                    spans.append(_special_text(text_node, ch, ch, False))
                     parsed += ch
                 continue
 

@@ -22,5 +22,3 @@ class StyleSheet(object):
     def end_parser(self):
         """End parsing, and return the final elements (list of them)."""
         raise NotImplementedError()
-
-

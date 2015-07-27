@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 import selfpub
-import os
 import sys
+import os
 import datetime
 import re
 
@@ -30,7 +30,7 @@ class ExampleStyleSheet(selfpub.stylesheet.StyleSheet):
             # Chapter start
             ret = self.chapter_div
             self.chapter_count += 1
-            self.chapter_div = selfpub.text.Chapter(m.group(1), self.chapter_count)
+            self.chapter_div = selfpub.text.Chapter("Chapter {0}".format(m.group(1)), self.chapter_count)
             return ret
         elif self.chapter_div is not None and isinstance(section, selfpub.text.Div):
             if isinstance(section, selfpub.text.Chapter):

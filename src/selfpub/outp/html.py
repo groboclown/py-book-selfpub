@@ -47,6 +47,12 @@ class HtmlOutput(OutputFile):
 
             write_footer(out)
 
+    def preview(self):
+        pass
+
+    def add_toc(self, toc):
+        pass
+
 
 def write_metadata(metadata, out):
     assert isinstance(metadata, text.MetaData)

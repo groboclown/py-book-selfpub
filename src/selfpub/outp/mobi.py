@@ -11,6 +11,7 @@ Tools:
 """
 
 from .output import OutputFile
+from .. import text
 import os
 import shutil
 
@@ -39,8 +40,7 @@ class MobiOutput(OutputFile):
     def add_section(self, section):
         assert section is not None
         
-        self.section_filenames[section.index] = 'chap{0!03d}.html'.format(
-            section.index)
+        self.section_filenames[section.index] = 'chap{0:03d}.html'.format(section.index)
         if section.is_toc:
             assert self.toc is None
             self.toc = section
@@ -67,10 +67,9 @@ class MobiOutput(OutputFile):
         if not os.path.samefile(self.metadata.cover.filename, coverifile):
             shutil.copyfile(self.metadata.cover.filename, coverifile)
         
-        if self.toc:
-            tocfile = os.path.join(self.outdir,
-                self.section_filenames[self.toc.index])
-            self.write_toc(tocfile, self.toc)
+        if self.toc is not None:
+            tocfile = os.path.join(self.outdir, self.section_filenames[self.toc.index])
+            self.write_toc(tocfile, False, self.toc)
         
         endfile = os.path.join(self.outdir, HTML_END_FILENAME)
         self.write_html_end(endfile)
@@ -79,7 +78,7 @@ class MobiOutput(OutputFile):
         # So allocate them into a structure, and call the write_toc when the
         # TOC is finally found.
         before_toc = []
-        keys = self.sections.keys()
+        keys = list(self.sections.keys())
         keys.sort()
         for key in keys:
             ch = self.sections[key]
@@ -95,7 +94,8 @@ class MobiOutput(OutputFile):
             
             if hasattr(ch, 'divs'):
                 for media in ch.divs:
-                    if isinstance(media, output.Media):
+                    if isinstance(media, text.Media):
+                        # FIXME
                         mediafile = os.path.join(self.outdir,
                             os.path.basename(media.filename))
                         if not os.path.samefile(mediafile, media.filename):
@@ -129,10 +129,10 @@ class MobiOutput(OutputFile):
                 ))
     
     def write_ncx(self, outfile):
-        navpoints, lastPlayOrder, maxdepth = self.create_navpoints()
+        navpoints, last_play_order, maxdepth = self.create_navpoints()
         
         toc_loc = None
-        keys = self.sections.keys()
+        keys = list(self.sections.keys())
         keys.sort()
         for key in keys:
             ch = self.sections[key]
@@ -149,7 +149,7 @@ class MobiOutput(OutputFile):
                 description=self.metadata.description,
                 depth=maxdepth,
                 toc_loc=toc_loc,
-                lastPlayOrder=lastPlayOrder
+                lastPlayOrder=last_play_order
                 ))
 
     def write_toc(self, outfile, before_toc, toc):
@@ -161,11 +161,11 @@ class MobiOutput(OutputFile):
         
         toc_divs = ""
 
-        def visit(ch, playOrder, depth):
+        def visit(ch, order, depth):
             raise NotImplementedError()
         
         # FIXME use search_sections
-        keys = self.sections.keys()
+        keys = list(self.sections.keys())
         keys.sort()
         for key in keys:
             ch = self.sections[key]
@@ -212,12 +212,12 @@ class MobiOutput(OutputFile):
         ret = (
             MANIFEST_ENTRY_TEMPLATE.format(
                 name='cover-image',
-                loc=os.path.basename(self.manifest.cover.filename),
-                mimetype=self.manifest.cover.get_mimetype())
+                loc=os.path.basename(self.metadata.cover.filename),
+                mimetype=self.metadata.cover.get_mimetype())
             )
         
         # FIXME use search_sections
-        keys = self.sections.keys()
+        keys = list(self.sections.keys())
         keys.sort()
         for key in keys:
             ch = self.sections[key]
@@ -228,7 +228,7 @@ class MobiOutput(OutputFile):
                 )
             if hasattr(ch, 'divs'):
                 for media in ch.divs:
-                    if isinstance(media, output.Media):
+                    if isinstance(media, text.Media):
                         ret += MANIFEST_ENTRY_TEMPLATE.format(
                             name=os.path.basename(media.filename),
                             loc=os.path.basename(media.filename),
@@ -243,7 +243,7 @@ class MobiOutput(OutputFile):
         
         ret = ""
         
-        keys = self.sections.keys()
+        keys = list(self.sections.keys())
         keys.sort()
         for key in keys:
             ch = self.sections[key]
@@ -256,7 +256,7 @@ class MobiOutput(OutputFile):
         # Find the actual page name of the TOC and first non-toc section
         first = None
         toc = None
-        keys = self.sections.keys()
+        keys = list(self.sections.keys())
         keys.sort()
         for key in keys:
             ch = self.sections[key]
@@ -266,15 +266,14 @@ class MobiOutput(OutputFile):
                 first = self.section_filenames[ch.index]
             if toc is not None and first is not None:
                 break
-        return GUIDE_TEMPLATE.format(
-            first_loc = first,
-            toc_loc = toc
-            )
+        return GUIDE_TEMPLATE.format(first_loc=first, toc_loc=toc)
 
     def create_navpoints(self):
         text_stack = []
+        global text_stack
 
-        def visit(ch, play_order, depth):
+        def visit(ch, order, depth):
+            global text_stack
             clazz = ""
             if ch.is_book:
                 clazz = 'class="book"'
@@ -285,8 +284,8 @@ class MobiOutput(OutputFile):
             if depth + 1 == len(text_stack):
                 # Bottom of tree
                 text_stack[depth] += NAVPOINT_TEMPLATE.format(
-                    name=str(play_order),
-                    order=str(play_order),
+                    name=str(order),
+                    order=str(order),
                     title=ch.name,
                     loc=self.section_filenames[ch.index],
                     index=ch.index,
@@ -297,53 +296,53 @@ class MobiOutput(OutputFile):
                 children = text_stack[-1]
                 text_stack = text_stack[:-1]
                 text_stack[depth] += NAVPOINT_TEMPLATE.format(
-                    name=str(play_order),
-                    order=str(play_order),
+                    name=str(order),
+                    order=str(order),
                     title=ch.name,
                     loc=self.section_filenames[ch.index],
                     index=ch.index,
                     navpoints=children,
                     clazz=clazz)
             else:
-                raise Exception("invalid walking")
+                raise Exception("invalid walking: depth {0}, text_stack: {1}".format(depth, text_stack))
                 
-        playOrder, maxDepth = self.search_sections(3, SEARCH_ORDER_POST, False, visit)
-        return (text_stack[0], playOrder, maxDepth)
+        play_order, max_depth = self.search_sections(3, SEARCH_ORDER_POST, False, visit)
+        return text_stack[0], play_order, max_depth
     
     def search_sections(self, init_index, search_order, visit_toc, visitor):
-        maxDepth = 0
-        playOrder = init_index
-        keys = self.sections.keys()
+        max_depth = 0
+        play_order = init_index
+        keys = list(self.sections.keys())
         keys.sort()
         for key in keys:
             ch = self.sections[key]
             if not ch.is_toc or visit_toc:
                 vals = self.__search_sections(
-                    ch, playOrder, 0, search_order, visitor)
-                playOrder = vals[0]
-                if vals[1] > maxDepth:
-                    maxDepth = vals[1]
-        return (playOrder, maxDepth)
+                    ch, play_order, 0, search_order, visitor)
+                play_order = vals[0]
+                if vals[1] > max_depth:
+                    max_depth = vals[1]
+        return play_order, max_depth
 
     def __search_sections(self, ch, index, depth, search_order, visitor):
-        retPlayOrder = playOrder + 1
-        retDepth = depth
+        ret_play_order = index + 1
+        ret_depth = depth
         
         if search_order == SEARCH_ORDER_PRE:
             visitor(ch, index, depth)
         
         if hasattr(ch, 'divs'):
             for sub in ch.divs:
-                if isinstance(sub, output.Chapter):
-                    vals = self.__create_navpoint(sub, retPlayOrder, depth + 1)
-                    retPlayOrder = vals[0]
-                    if vals[1] > retDepth:
-                        retDepth = vals[1]
+                if isinstance(sub, text.Chapter):
+                    vals = self.__create_navpoint(sub, ret_play_order, depth + 1)
+                    ret_play_order = vals[0]
+                    if vals[1] > ret_depth:
+                        ret_depth = vals[1]
         
         if search_order == SEARCH_ORDER_POST:
             visitor(ch, index, depth)
         
-        return (retPlayOrder, retDepth)
+        return ret_play_order, ret_depth
 
 
 OPF_TEMPLATE = """<?xml version="1.0"?>

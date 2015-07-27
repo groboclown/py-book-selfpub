@@ -174,7 +174,7 @@ class Para(Div):
                 spanstxt += u", "
             else:
                 visited = True
-            spanstxt += str(spn)
+            spanstxt += repr(spn)
         spanstxt += u"]"
         return u"Para(Style: {0}; spans: {1})".format(
             self.style, spanstxt)
@@ -384,6 +384,7 @@ class MetaData(object):
         self.isbn_10 = ""
         self.isbn_13 = ""
         self.language = "en"
+        self.subtitles = []
     
     def set_cover(self, cover):
         assert isinstance(cover, Image)
@@ -398,5 +399,6 @@ class MetaData(object):
             "description": self.description,
             "isbn_10": self.isbn_10,
             "isbn_13": self.isbn_13,
-            "language": self.language
+            "language": self.language,
+            "subtitles": self.subtitles
         }
