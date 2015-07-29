@@ -8,6 +8,8 @@ Tools:
     http://www.amazon.com/gp/feature.html?ie=UTF8&docId=1000234621
     
     (KindleGen and Kindle Previewer)
+
+This still needs a lot of work.
 """
 
 from .output import OutputFile

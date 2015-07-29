@@ -447,6 +447,7 @@ MEDIA_CONTAINER_TAGS = (
 IMAGE_TAGS = (
     'draw:image',
     )
+# FIXME this should mean a paragraph break!!!!!!
 WHITESPACE_DIV_TAGS = (
     'text:line-break',
 )
@@ -497,6 +498,7 @@ def parse_node(node, content, parent_style_list=None):
             raise Exception("Unknown parsing for control tag {0}".format(node.toxml()))
     
     elif tag in PARA_TAGS:
+        ret_list = []
         ret = text.Para()
         parse_style(style_list, ret.style)
         for child in node.childNodes:
@@ -508,11 +510,20 @@ def parse_node(node, content, parent_style_list=None):
             
             if ntype == xml.dom.Node.ELEMENT_NODE:
                 pchild = parse_node(child, content, style_list)
+                if not isinstance(pchild, list):
+                    pchild = [pchild]
                 if isinstance(pchild, list):
                     for ch in pchild:
-                        ret.add_span(ch)
-                else:
-                    ret.add_span(pchild)
+                        if isinstance(pchild, text.Div):
+                            # A new top-level div inside this one.  Break it apart
+                            # so that the returned paragraphs only have spans.
+                            prev_style = ret.style
+                            ret_list.append(ret)
+                            ret_list.append(ch)
+                            ret = text.Para()
+                            ret.style = prev_style
+                        else:
+                            ret.add_span(ch)
             elif (ntype == xml.dom.Node.TEXT_NODE or
                     ntype == xml.dom.Node.CDATA_SECTION_NODE):
                 pchild = text.Text()
@@ -523,7 +534,8 @@ def parse_node(node, content, parent_style_list=None):
             else:
                 # Ignore non elements and text nodes
                 pass
-        return ret
+        ret_list.append(ret)
+        return ret_list
 
     elif tag in SPAN_TAGS:
         ret = []
@@ -564,11 +576,10 @@ def parse_node(node, content, parent_style_list=None):
         return ret
 
     elif tag in WHITESPACE_DIV_TAGS or tag in CONTROL_TAGS:
-        # Ignore these
-        # ret = text.Para()
-        # parse_style(style_list, ret.style)
-        # return ret
-        return []
+        # This indicates a new paragraph.  However, it's a stand-alone tag.
+        ret = text.Para()
+        parse_style(style_list, ret.style)
+        return ret
 
     elif tag in DATA_TAGS:
         print("Unexpected data tag at top level: {0}".format(node.toxml()))
