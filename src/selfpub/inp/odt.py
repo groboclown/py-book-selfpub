@@ -314,7 +314,7 @@ class OdtStyle(object):
                     attr = para.getAttribute(key)
                     if len(attr) > 0:
                         self.paragraph[val] = attr
-            
+
             for text_node in style_node.getElementsByTagName("style:text-properties"):
                 for key, val in TEXT_STYLE_ATTRIBUTES.items():
                     if text_node.hasAttribute(key):
@@ -410,6 +410,9 @@ def parse_block_style(odt_style_list, text_style):
     for style in styles:
         if style.name is not None and len(style.name) > 0:
             text_style.name = style.name
+
+            # FIXME
+
             break
     pass
 
@@ -423,6 +426,27 @@ def parse_span_style(odt_style_list, text_style):
             text_style.name = style.name
             break
     pass
+
+
+def _convert_units(self, val):
+    """
+    Convert the text value into a common unit.  In this case, we're converting to mm.
+
+    :param val:
+    :return:
+    """
+    val = str(val)
+    if val[-2:] == "mm":
+        # As-is
+        return val[:-2]
+    elif val[-2:] == "cm":
+        return str(float(val[:-2]) * 10.0)
+    elif val[-2:] == "m":
+        return str(float(val[:-2]) * 1000.0)
+    elif val[-2:] == "in":
+        return str(float(val[:-2]) * 25.4)
+    else:
+        return val
 
 
 CONTROL_CONTAINER_TAGS = (
@@ -447,7 +471,6 @@ MEDIA_CONTAINER_TAGS = (
 IMAGE_TAGS = (
     'draw:image',
     )
-# FIXME this should mean a paragraph break!!!!!!
 WHITESPACE_DIV_TAGS = (
     'text:line-break',
 )
@@ -514,7 +537,7 @@ def parse_node(node, content, parent_style_list=None):
                     pchild = [pchild]
                 if isinstance(pchild, list):
                     for ch in pchild:
-                        if isinstance(pchild, text.Div):
+                        if isinstance(ch, text.Div):
                             # A new top-level div inside this one.  Break it apart
                             # so that the returned paragraphs only have spans.
                             prev_style = ret.style

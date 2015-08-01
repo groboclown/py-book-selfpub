@@ -100,7 +100,7 @@ class Cleaner(InputFile):
                 if first:
                     first = False
                     if len(span.text) > 0 and span.text[0] != '\t':
-                        print("*** Does not start with tab: {0}".format(span.text))
+                        print("*** Does not start with tab: {!r}".format(span.text))
                 parsed = self.clean_text(span, new_spans, parsed)
             else:
                 new_spans.append(span)
@@ -114,7 +114,7 @@ class Cleaner(InputFile):
             return None
         if contents.count('*') == len(contents):
             # A row of '*', which indicates a special separator line.
-            print("-- turned [{0}] into a line".format(contents))
+            print("-- turned {!r} into a line".format(contents))
             ret = text.SeparatorLine()
             ret.source = para.source
             return ret
@@ -124,7 +124,7 @@ class Cleaner(InputFile):
         if text_node.text is None or text_node.text == "":
             return parsed
         val = ""
-        print("cleaning [{0}]".format(text_node))
+        print("cleaning {!r}".format(text_node))
         for ch in text_node.text:
             # print("  - [{0}]".format(ord(ch)))
             # if ch == '\t':

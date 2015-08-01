@@ -78,11 +78,12 @@ class Style(object):
 
 class BlockStyle(Style):
     def __init__(self):
+        # All size measurements in mm
         Style.__init__(self, {
-            'margin-left': STYLE_TYPE_INT,
-            'margin-right': STYLE_TYPE_INT,
-            'margin-top': STYLE_TYPE_INT,
-            'margin-bottom': STYLE_TYPE_INT,
+            'margin-left': STYLE_TYPE_FLOAT,
+            'margin-right': STYLE_TYPE_FLOAT,
+            'margin-top': STYLE_TYPE_FLOAT,
+            'margin-bottom': STYLE_TYPE_FLOAT,
             'page-break': STYLE_TYPE_BOOLEAN,
             'h-align': ["center", "left", "right", "justify"],
             'border-left-width': STYLE_TYPE_INT,

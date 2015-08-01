@@ -5,16 +5,23 @@ Uses template files to generate an ODT document.
 
 from .output import OutputFile
 import os
+import sys
 import zipfile
 from .. import text
+
+from .template import tenjin
+# Replacement for "from tenjin.helpers import *"
+for n in tenjin.helpers.__all__:
+    setattr(sys.modules[__name__], n, getattr(tenjin.helpers, n))
+
 
 class ZipGenOutput(OutputFile):
     def __init__(self, template_dir, output_file):
         OutputFile.__init__(self)
         self.output_file = output_file
         self.template_dir = template_dir
-        assert os.path.isdir(os.path.join(template_dir, "copy"))
-        assert os.path.isdir(os.path.join(template_dir, "template"))
+        assert os.path.isdir(os.path.join(template_dir, "copy")), "does not exist: " + os.path.join(template_dir, "copy")
+        assert os.path.isdir(os.path.join(template_dir, "template")), "does not exist: " + os.path.join(template_dir, "template")
         self.__chapters = []
         self.__toc = None
         self.__md = None
@@ -105,8 +112,6 @@ def _template_file(engine, filename, data):
 
 def _create_template_engine():
     properties = {}
-    from .template import tenjin
-    from tenjin.helpers import *
     return tenjin.Engine(**properties)
 
 

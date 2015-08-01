@@ -867,8 +867,9 @@ class Template(object):
     ##           ]
     def parse_lines(self, lines):
         block = []
+        print("lines: "+repr(lines))
         try:
-            self._parse_lines(lines.__iter__(), False, block, 0)
+            self._parse_lines(iter(lines), False, block, 0)
         except StopIteration:
             if self.depth > 0:
                 fname, linenum, colnum, linetext = self.filename, len(lines), None, None
@@ -883,9 +884,8 @@ class Template(object):
         _END_WORDS   = self._END_WORDS
         _CONT_WORDS  = self._CONT_WORDS
         _WORD_REXP   = self._WORD_REXP
-        get_line = lines_iter.__next__
         while True:
-            line = get_line()
+            line = next(lines_iter)
             linenum += line.count("\n")
             m = _WORD_REXP.search(line)
             if not m:

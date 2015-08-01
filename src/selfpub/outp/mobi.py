@@ -271,8 +271,8 @@ class MobiOutput(OutputFile):
         return GUIDE_TEMPLATE.format(first_loc=first, toc_loc=toc)
 
     def create_navpoints(self):
-        text_stack = []
         global text_stack
+        text_stack = []
 
         def visit(ch, order, depth):
             global text_stack
